@@ -45,9 +45,25 @@ export async function combineAndProcessChunks(uploadId, totalChunks, originalFil
     if (!result.success) {
       throw new Error(`Failed to process file: ${result.error}`);
     }
-    // Limpiar archivos temporales después del éxito
+   
+     // Encolar para sincronización con S3
+     const s3Key = `uploads/${crypto.randomBytes(16).toString('hex')}/${finalFilename}`;
+     const syncTaskId = await s3Service.queueForSync({
+       filePath: finalPath,
+       s3Key,
+       metadata: {
+         contentType: result.metadata?.format 
+           ? `image/${result.metadata.format}` 
+           : 'application/octet-stream',
+         originalName: originalFilename,
+         processingType: String(result.processingType || ''),
+         originalSize: String(result.originalSize || ''),
+         processedSize: String(result.processedSize || ''),
+         uploadId: String(uploadId),
+         deleteAfterUpload: 'false'
+       }
+     });
     await cleanupService.cleanupUpload(uploadId, true);
-
   
     
     return {

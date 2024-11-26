@@ -6,6 +6,7 @@ import fs from 'fs';
 import { promisify } from 'util';
 import { EventEmitter } from 'events';
 import { fileURLToPath } from 'url';
+//import { Console } from "console";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -144,6 +145,7 @@ export class S3Service {
       try {
         const command = new PutObjectCommand(uploadParams);
         await this.s3Client.send(command);
+        console.log("Sincronización completa")
         
         if (metadata?.deleteAfterUpload) {
           await promisify(fs.unlink)(filePath);
@@ -157,6 +159,7 @@ export class S3Service {
       throw error;
     }
   }
+
 
   async queueForSync(fileInfo) {
     return new Promise((resolve, reject) => {
@@ -229,5 +232,9 @@ export class S3Service {
 // Crear y exportar instancia por defecto
 export const s3Service = new S3Service({
   bucket: process.env.S3_BUCKET,
-  region: process.env.AWS_REGION
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
 });
